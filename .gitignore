@@ -1,0 +1,21 @@
+node_modules/
+cache/
+artifacts/
+typechain-types/
+coverage/
+coverage.json
+
+# Foundry-style outputs (kept for future tooling compatibility)
+out/
+broadcast/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.log

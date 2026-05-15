@@ -1,0 +1,41 @@
+{
+  "name": "uw-oracle-contracts",
+  "version": "0.1.0",
+  "description": "Pull-based multi-source price oracle — Solidity contracts (AggregatorV3-compatible).",
+  "license": "MIT",
+  "author": "Andrei Solovov <https://github.com/asolovov>",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test mocha",
+    "lint": "solhint 'src/**/*.sol'",
+    "lint:fix": "solhint 'src/**/*.sol' --fix",
+    "format": "prettier --write 'src/**/*.sol' '{test,script}/**/*.{ts,js}'",
+    "format:check": "prettier --check 'src/**/*.sol' '{test,script}/**/*.{ts,js}'",
+    "slither": "slither . --config-file slither.config.json"
+  },
+  "devDependencies": {
+    "@chainlink/contracts": "1.5.0",
+    "@nomicfoundation/hardhat-mocha": "3.0.19",
+    "@nomicfoundation/hardhat-toolbox-viem": "5.0.5",
+    "@openzeppelin/contracts": "5.6.1",
+    "@types/chai": "5.2.3",
+    "@types/mocha": "10.0.10",
+    "@types/node": "22.10.10",
+    "chai": "6.2.2",
+    "dotenv": "16.4.7",
+    "mocha": "11.7.5",
+    "fast-check": "4.8.0",
+    "hardhat": "3.4.5",
+    "prettier": "3.4.2",
+    "prettier-plugin-solidity": "2.3.1",
+    "solhint": "6.2.1",
+    "tsx": "4.19.3",
+    "typescript": "5.7.3",
+    "viem": "2.49.2"
+  }
+}

@@ -1,10 +1,23 @@
 import type { HardhatUserConfig } from "hardhat/config";
-import hardhatToolboxViem from "@nomicfoundation/hardhat-toolbox-viem";
+import hardhatIgnitionViem from "@nomicfoundation/hardhat-ignition-viem";
+import hardhatKeystore from "@nomicfoundation/hardhat-keystore";
 import hardhatMocha from "@nomicfoundation/hardhat-mocha";
+import hardhatNetworkHelpers from "@nomicfoundation/hardhat-network-helpers";
+import hardhatVerify from "@nomicfoundation/hardhat-verify";
+import hardhatViem from "@nomicfoundation/hardhat-viem";
+import hardhatViemAssertions from "@nomicfoundation/hardhat-viem-assertions";
 import "dotenv/config";
 
 const config: HardhatUserConfig = {
-  plugins: [hardhatToolboxViem, hardhatMocha],
+  plugins: [
+    hardhatViem,
+    hardhatViemAssertions,
+    hardhatNetworkHelpers,
+    hardhatMocha,
+    hardhatKeystore,
+    hardhatIgnitionViem,
+    hardhatVerify,
+  ],
   solidity: {
     profiles: {
       default: {
@@ -26,10 +39,6 @@ const config: HardhatUserConfig = {
     hardhatMainnet: {
       type: "edr-simulated",
       chainType: "l1",
-    },
-    hardhatOp: {
-      type: "edr-simulated",
-      chainType: "op",
     },
   },
 };

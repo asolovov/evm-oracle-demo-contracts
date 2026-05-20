@@ -1,33 +1,31 @@
-# uw-oracle-contracts
+# evm-oracle-demo-contracts
 
-[![CI](https://github.com/asolovov/uw-oracle-contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/asolovov/uw-oracle-contracts/actions/workflows/ci.yml)
+[![CI](https://github.com/asolovov/evm-oracle-demo-contracts/actions/workflows/ci.yml/badge.svg)](https://github.com/asolovov/evm-oracle-demo-contracts/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Solidity 0.8.24](https://img.shields.io/badge/Solidity-0.8.24-blue.svg)](https://docs.soliditylang.org/en/v0.8.24/)
 
 > Pull-based, multi-source price oracle for crypto + RWA assets. Chainlink `AggregatorV3Interface`-compatible.
 
-Solidity component of **Lighthouse Oracle** — a portfolio demo covering the
-full senior-blockchain-engineer stack on a single self-hosted VPS (Solidity +
-Go microservices + Next.js dashboard + multi-source aggregation + signed
-price submission + deployable infra).
+Solidity component of the **EVM Oracle Demo** — a portfolio project covering
+the full senior-blockchain-engineer stack on a single self-hosted VPS
+(Solidity + Go microservices + Next.js dashboard + multi-source aggregation +
+signed price submission + deployable infra).
 
-The live demo aggregates 10 assets (5 crypto, 5 RWA) on Base Sepolia and
-Optimism Sepolia from three independent free-tier sources per asset class,
-submits prices via 2-of-3 reporter signatures, and exposes everything through
-a public REST/WebSocket API and a Next.js dashboard.
+The live demo aggregates 10 assets (5 crypto, 5 RWA) on Base Sepolia from
+three independent free-tier sources per asset class, submits prices via
+2-of-3 reporter signatures, and exposes everything through a public
+REST/WebSocket API and a Next.js dashboard.
 
 ## Status
 
 **Scaffold only.** This repo currently contains the build toolchain,
 interface contracts, and stub implementations. Core logic (signature
-verification, fulfillment, reporter management, registry) lands in
-[task 03](https://github.com/asolovov/uw-oracle-contracts/issues?q=task-03).
+verification, fulfillment, reporter management, registry) lands in task 03.
 
 ## Stack
 
 - **Solidity 0.8.24** — pinned uniformly across every `.sol` file.
-- **Hardhat v3** with `@nomicfoundation/hardhat-toolbox-viem` — compile, test, deploy.
-- **Mocha + chai + fast-check** — unit, integration, and property-based tests.
+- **Hardhat v3** — compile, test, deploy. Mocha + chai + fast-check for unit, integration, and property-based tests.
 - **OpenZeppelin Contracts v5** (MIT) — `Ownable2Step`, `ReentrancyGuard`.
 - **@chainlink/contracts v1** (MIT) — `AggregatorV3Interface` import **only**.
   This project does NOT fork Chainlink. Implementation is original.
@@ -58,13 +56,13 @@ script/
 ## Getting started
 
 ```sh
-git clone https://github.com/asolovov/uw-oracle-contracts.git
-cd uw-oracle-contracts
+git clone https://github.com/asolovov/evm-oracle-demo-contracts.git
+cd evm-oracle-demo-contracts
 npm ci
 cp .env.example .env
 
 npx hardhat compile
-npx hardhat test mocha
+npx hardhat test
 npm run lint
 ```
 
@@ -99,5 +97,5 @@ Senior blockchain engineer — Solidity, Go, EVM infrastructure.
 
 - LinkedIn — <https://www.linkedin.com/in/andrei-solovov/>
 - GitHub — <https://github.com/asolovov>
-- Source — <https://github.com/asolovov/uw-oracle-contracts>
+- Source — <https://github.com/asolovov/evm-oracle-demo-contracts>
 - Upwork — rendered on the live dashboard `/about` page when `NEXT_PUBLIC_UPWORK_URL` is configured.

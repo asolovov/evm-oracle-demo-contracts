@@ -5,11 +5,7 @@ typechain-types/
 coverage/
 coverage.json
 
-# Foundry-style outputs (kept for future tooling compatibility)
-out/
-broadcast/
-
-# Environment
+# Environment (.env.example is checked in)
 .env
 .env.*
 !.env.example

@@ -94,11 +94,21 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Slither + solc-select
+      - name: Install Slither
+        run: pip install slither-analyzer==0.10.4
+
+      - name: Install solc 0.8.24
         run: |
-          pip install slither-analyzer==0.10.4 solc-select==1.0.4
-          solc-select install 0.8.24
-          solc-select use 0.8.24
+          # Download the solc 0.8.24 binary directly from binaries.soliditylang.org
+          # to avoid solc-select's GitHub API call (which rate-limits anonymous CI
+          # runners with HTTP 403).
+          sudo curl -fsSL \
+            https://binaries.soliditylang.org/linux-amd64/solc-linux-amd64-v0.8.24+commit.e11b9ed9 \
+            -o /usr/local/bin/solc
+          sudo chmod +x /usr/local/bin/solc
+          solc --version
 
       - name: Run Slither
+        env:
+          SOLC: /usr/local/bin/solc
         run: npm run slither

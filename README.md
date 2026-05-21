@@ -18,9 +18,21 @@ REST/WebSocket API and a Next.js dashboard.
 
 ## Status
 
-**Scaffold only.** This repo currently contains the build toolchain,
-interface contracts, and stub implementations. Core logic (signature
-verification, fulfillment, reporter management, registry) lands in task 03.
+**Core contracts implemented.** `PriceLib` (EIP-712 + ECDSA M-of-N verification +
+decimals scaling), `ReporterSet` (M-of-N admin), `PriceAggregator` (per-asset
+Chainlink-compatible feed with `requestPrice` / `fulfillPrice` cycle),
+`OracleRegistry` (asset directory), and `PriceConsumer` (reference consumer)
+are live and tested. Verified gates:
+
+- `npx hardhat test` — 71 passing (unit + integration + property-based via `fast-check`)
+- `npx hardhat test mocha --coverage` — **100%** line + statement coverage on
+  `src/core/` and `src/libs/`
+- `npm run slither` — **0 findings** (intentional patterns suppressed with NatSpec rationale)
+- `npm run lint`, `npm run format:check` — clean
+
+The Solidity workspace is ready for the internal audit pass (audit tree,
+threat model, access-control matrix) and on-chain deploys to Base Sepolia
+that follow in subsequent tasks.
 
 ## Stack
 

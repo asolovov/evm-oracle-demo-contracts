@@ -30,15 +30,15 @@ contract PriceConsumer {
 
     /// @notice Forward a price request to `aggregator`, paying its current fee from `msg.value`.
     /// @dev    Any refund returned by the aggregator is relayed back to the original caller.
+    ///         The post-call `lastReqId = reqId` write is intentionally after the external
+    ///         call (the aggregator is `nonReentrant`; the field is a notification surface
+    ///         never read inside the call), so the slither `reentrancy-benign` suppression
+    ///         lives next to the assignment below.
     /// @return reqId The assigned request id (also stored in `lastReqId`).
-    /// @dev    Slither flags `lastReqId = reqId` as a reentrancy-benign write after the
-    ///         aggregator call. The aggregator is `nonReentrant`, so reentering this
-    ///         consumer cannot affect the read of `reqId`; the only state mutated here
-    ///         after the call is a notification field, never read inside the call.
-    // slither-disable-next-line reentrancy-benign
     function requestPrice() external payable returns (uint256 reqId) {
         uint256 balanceBefore = address(this).balance - msg.value;
         reqId = aggregator.requestPrice{value: msg.value}();
+        // slither-disable-next-line reentrancy-benign
         lastReqId = reqId;
 
         uint256 refund = address(this).balance - balanceBefore;
@@ -50,12 +50,12 @@ contract PriceConsumer {
     }
 
     /// @notice Read the most recent reported answer through the Chainlink interface.
-    /// @return answer Most recent price (scaled to `aggregator.decimals()`).
     /// @dev    Intentionally discards `roundId`, `startedAt`, `updatedAt`, `answeredInRound`
-    ///         — this consumer cares only about the answer. Standard pattern flagged
-    ///         by Slither's `unused-return` heuristic.
-    // slither-disable-next-line unused-return
+    ///         — this consumer cares only about the answer. The slither `unused-return`
+    ///         suppression lives next to the call below.
+    /// @return answer Most recent price (scaled to `aggregator.decimals()`).
     function latestAnswer() external view returns (int256 answer) {
+        // slither-disable-next-line unused-return
         (, answer, , , ) = IAggregatorV3(address(aggregator)).latestRoundData();
     }
 

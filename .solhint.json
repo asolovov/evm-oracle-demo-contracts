@@ -14,6 +14,8 @@
     "ordering": "off",
     "gas-custom-errors": "off",
     "gas-indexed-events": "off",
+    "gas-small-strings": "off",
+    "gas-strict-inequalities": "off",
     "immutable-vars-naming": "off",
     "func-named-parameters": "off"
   }

@@ -73,11 +73,9 @@ jobs:
         run: npm run lint
 
   slither:
-    name: Slither (non-blocking, baseline only)
+    name: Slither
     runs-on: ubuntu-24.04
     needs: compile
-    # task 02 baseline run — becomes blocking in task 03.
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -99,5 +97,18 @@ jobs:
       - name: Install Slither
         run: pip install slither-analyzer==0.10.4
 
+      - name: Install solc 0.8.24
+        run: |
+          # Download the solc 0.8.24 binary directly from binaries.soliditylang.org
+          # to avoid solc-select's GitHub API call (which rate-limits anonymous CI
+          # runners with HTTP 403).
+          sudo curl -fsSL \
+            https://binaries.soliditylang.org/linux-amd64/solc-linux-amd64-v0.8.24+commit.e11b9ed9 \
+            -o /usr/local/bin/solc
+          sudo chmod +x /usr/local/bin/solc
+          solc --version
+
       - name: Run Slither
-        run: slither . --config-file slither.config.json || true
+        env:
+          SOLC: /usr/local/bin/solc
+        run: npm run slither

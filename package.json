@@ -16,7 +16,7 @@
     "lint:fix": "solhint 'src/**/*.sol' --fix",
     "format": "prettier --write 'src/**/*.sol' '{test,script}/**/*.{ts,js}'",
     "format:check": "prettier --check 'src/**/*.sol' '{test,script}/**/*.{ts,js}'",
-    "slither": "slither . --config-file slither.config.json"
+    "slither": "sh scripts/run-slither.sh"
   },
   "devDependencies": {
     "@chainlink/contracts": "1.5.0",

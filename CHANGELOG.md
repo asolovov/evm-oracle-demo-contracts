@@ -7,6 +7,20 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Security
+
+- **M-01 (Medium) fix** — Heartbeat replay closed in `PriceAggregator.fulfillPrice`.
+  Added a monotonic-`startedAt` gate: any new submission must carry a
+  `timestamp` strictly greater than `_rounds[latestRoundId].startedAt`. New
+  custom error `StaleTimestamp(submittedAt, latestStartedAt)` exposes the
+  trigger. The gate fires independently of `maxAge`, so the demo-permissive
+  default (`maxAge = type(uint256).max`) is no longer a replay vector. See
+  `audit/findings.md#M-01`.
+- **M-02 (Medium) fix** — `PriceLib.scaleTo` silent sign-flip on
+  `int256(10 ** 77)` closed. Both magnitude casts now go through
+  `SafeCast.toInt256`, which reverts with `SafeCastOverflowedUintToInt(value)`
+  when the value exceeds `int256.max`. See `audit/findings.md#M-02`.
+
 ### Added
 
 - **`PriceLib`** — pure library exposing EIP-712 digest construction
@@ -30,12 +44,22 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 - **`PriceConsumer`** — concrete reference consumer that forwards
   `requestPrice` to the aggregator, captures the assigned `reqId`, and relays
   the refund back to the original caller.
-- **Tests** — 71 total (Mocha + viem + chai): 60 unit tests across the four
+- **Tests** — 77 total (71 from task 03 + 6 audit regression tests). The
+  audit suite (Mocha + viem + chai): 60 unit tests across the four
   contracts (using a `PriceLibHarness` for the internal-library entry points),
   3 integration tests covering the full
   `PriceConsumer → fulfillPrice → consumer reads` cycle, and 7 property-based
   tests via `fast-check` (1,000 runs each on the pure paths; 100 runs on the
-  fee-refund property that sends real EDR transactions).
+  fee-refund property that sends real EDR transactions). Audit regression
+  tests under `test/audit/` assert that the M-01 and M-02 remediations hold
+  against the originally-exploitable scenarios.
+- **`audit/` tree** — full deliverables of internal-audit-v1:
+  `findings.md`, `THREAT_MODEL.md`, `CHECKLIST.md`,
+  `reports/internal-audit-v1.md`, `reports/access-control-matrix.md`,
+  `reports/storage-layouts.md`, raw `slither-v1.txt` and `coverage-v1.txt`
+  captures, plus the regression PoCs under `test/audit/`. Report status:
+  `draft`, awaiting human peer sign-off; 0 Critical / 0 High; 2 Medium
+  (both remediated); 3 Low (open); 7 Informational (accepted).
 - **Coverage tooling** — `npx hardhat test mocha --coverage` reports 100% line
   + statement coverage on `src/core/` and `src/libs/`.
 - **Slither** — `slither-all.sol` aggregator file + `scripts/run-slither.sh`

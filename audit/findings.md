@@ -9,14 +9,16 @@ rationale), `false-positive` (re-triaged as not-a-bug after deeper analysis).
 
 ## Tally
 
-| Severity | Count |
-|----------|-------|
-| Critical | 0 |
-| High     | 0 |
-| Medium   | 2 |
-| Low      | 3 |
-| Informational | 7 |
-| False-positive (re-triaged) | 0 |
+| Severity | Count | Open | Remediated | Accepted |
+|----------|-------|------|------------|----------|
+| Critical | 0 | 0 | 0 | 0 |
+| High     | 0 | 0 | 0 | 0 |
+| Medium   | 2 | 0 | **2** | 0 |
+| Low      | 3 | 3 | 0 | 0 |
+| Informational | 7 | 0 | 0 | 7 |
+| False-positive (re-triaged) | 0 | – | – | – |
+
+**Remediation pass:** both Mediums (M-01, M-02) closed on the same audit branch — see the individual write-ups for the patch + commit references. Lows left open pending owner decision.
 
 ---
 
@@ -24,7 +26,7 @@ rationale), `false-positive` (re-triaged as not-a-bug after deeper analysis).
 
 - **Severity:** Medium
 - **Site:** `src/core/PriceAggregator.sol:142-181` (`fulfillPrice`); design interaction with `maxAge = type(uint256).max` default at `src/core/PriceAggregator.sol:116`
-- **Status:** open
+- **Status:** **remediated** (audit branch) — monotonic-`startedAt` gate added in `fulfillPrice`; new `StaleTimestamp(submittedAt, latestStartedAt)` custom error; regression test in `test/audit/HeartbeatReplay.audit.test.ts` now asserts the gate fires.
 
 ### Description
 
@@ -91,13 +93,23 @@ Pick one (or layer several):
 Option 2 is the simplest and addresses the bulk of the attack with one extra
 storage word.
 
+### Remediation applied (2026-05-21)
+
+Took **option 2**, reading the prior round's `startedAt` directly from
+`_rounds[latestRoundId]` (no new storage slot) and rejecting any submission
+where `timestamp <= latestStartedAt`. On the very first fulfillment
+`_rounds[0].startedAt == 0` and `timestamp > 0` is the natural sanity floor,
+so no initial-bootstrap branch is required. The gate fires independently of
+`maxAge`, so the demo-permissive default no longer enables replay. New custom
+error `StaleTimestamp(submittedAt, latestStartedAt)` exposes the trigger.
+
 ---
 
 ## M-02 — `PriceLib.scaleTo` sign-flip on `int256(10**diff)` cast for `diff = 77`
 
 - **Severity:** Medium
 - **Site:** `src/libs/PriceLib.sol:132` and `src/libs/PriceLib.sol:139`
-- **Status:** open
+- **Status:** **remediated** (audit branch) — both casts now go through `SafeCast.toInt256`; regression test in `test/audit/PriceLibScaleTo.audit.test.ts` asserts `SafeCastOverflowedUintToInt` at `diff == 77`.
 
 ### Description
 
@@ -166,6 +178,18 @@ Either:
    silently sign-flipping.
 
 Option 2 is the conventional defence and is one line.
+
+### Remediation applied (2026-05-21)
+
+Took **option 2**. Imported `SafeCast` from
+`@openzeppelin/contracts/utils/math/SafeCast.sol` and wrapped both magnitude
+casts (`int256 factor = SafeCast.toInt256(10 ** diff);` /
+`int256 divisor = SafeCast.toInt256(10 ** diffDown);`). `SafeCast.toInt256`
+reverts with `SafeCastOverflowedUintToInt(uint256 value)` when the value
+exceeds `int256.max`, so `diff == 77` now reverts deterministically instead
+of silently sign-flipping. `diff >= 78` continues to revert at the
+`10 ** diff` overflow (Solidity 0.8 checked arithmetic) as before, just with
+the standard `Panic(0x11)` selector.
 
 ### Severity rationale
 

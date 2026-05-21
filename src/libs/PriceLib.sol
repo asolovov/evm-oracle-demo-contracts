@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 /// @title  PriceLib
 /// @author Andrei Solovov <https://github.com/asolovov>
@@ -114,8 +115,12 @@ library PriceLib {
     }
 
     /// @notice Rescale `src` from `srcDecimals` to `dstDecimals`.
-    /// @dev    Scaling up multiplies by `10 ** (dst - src)` — overflow reverts under Solidity 0.8.
-    ///         Scaling down divides, which truncates toward zero (Solidity's native int division).
+    /// @dev    Scaling up multiplies by `10 ** (dst - src)`; scaling down divides. The
+    ///         `10 ** diff` magnitude is converted via `SafeCast.toInt256`, which reverts
+    ///         when the value exceeds `int256.max` — closes the silent sign-flip at
+    ///         `diff == 77` flagged in audit/findings.md#M-02. The multiplication still
+    ///         reverts on the standard 0.8 overflow path; division truncates toward zero
+    ///         (Solidity's native int division).
     /// @param  src          Source value.
     /// @param  srcDecimals  Decimals the source value is expressed in.
     /// @param  dstDecimals  Decimals the result should be expressed in.
@@ -129,14 +134,14 @@ library PriceLib {
             unchecked {
                 diff = uint256(dstDecimals - srcDecimals);
             }
-            int256 factor = int256(10 ** diff);
+            int256 factor = SafeCast.toInt256(10 ** diff);
             return src * factor;
         }
         uint256 diffDown;
         unchecked {
             diffDown = uint256(srcDecimals - dstDecimals);
         }
-        int256 divisor = int256(10 ** diffDown);
+        int256 divisor = SafeCast.toInt256(10 ** diffDown);
         return src / divisor;
     }
 

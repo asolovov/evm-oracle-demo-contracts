@@ -7,9 +7,12 @@
 | Field | Value |
 |-------|-------|
 | Commit SHA at audit start | `c6b586cab879edb83d6910339fbfea5bd2a4328f` (`main`) |
+| Audit deliverables commit | `6a4a8b8` on `feat/internal-audit-v1` |
+| Remediation commit | added in the same audit branch on 2026-05-21 (closes M-01 + M-02) |
 | Branch | `feat/internal-audit-v1` |
 | Date | 2026-05-21 |
 | Auditor identity | claude (general-purpose subagent), Anthropic Claude Code |
+| Remediating engineer | claude (parent agent), Anthropic Claude Code |
 | Status | `draft` (flips to `accepted` only after human peer sign-off) |
 
 ### Contracts in scope
@@ -31,31 +34,42 @@
 
 ## Executive summary
 
-| Severity | Count |
-|----------|-------|
-| Critical | **0** |
-| High     | **0** |
-| Medium   | **2** |
-| Low      | **3** |
-| Informational | **7** |
+| Severity | Count | Open | Remediated | Accepted |
+|----------|-------|------|------------|----------|
+| Critical | **0** | 0 | 0 | 0 |
+| High     | **0** | 0 | 0 | 0 |
+| Medium   | **2** | 0 | **2** | 0 |
+| Low      | **3** | 3 | 0 | 0 |
+| Informational | **7** | 0 | 0 | 7 |
 
-Two open Mediums, both with viable remediation paths and demonstration tests.
+**Status:** both Mediums (M-01 heartbeat replay, M-02 `scaleTo` cast sign-flip)
+were remediated on the same audit branch — patches are referenced in their
+individual write-ups and re-tested against the same PoC harness that
+originally exhibited the bug. Lows remain open pending owner decision.
 No Critical or High findings. The Slither baseline reports zero issues
 (`audit/reports/slither-v1.txt`). All six historical Slither suppressions
 from task 03 were re-walked individually; rationales hold.
 
-### Headline findings
+### Headline findings (post-remediation)
 
-- **M-01 — Heartbeat replay under demo-default `maxAge`.** Anyone can replay
-  a previously-fulfilled heartbeat (`reqId == 0`) from public chain history
-  while `maxAge == type(uint256).max`, overwriting `latestRoundData` with a
-  stale-but-legitimately-signed price.
-- **M-02 — `PriceLib.scaleTo` sign flip at `diff == 77`.** A `uint -> int`
-  cast on `10**77` reinterprets the high bit and silently returns a negative
-  factor. Not reachable from any current on-chain entry point but is a
-  library-API correctness defect.
+- **M-01 — Heartbeat replay under demo-default `maxAge`. Remediated.**
+  Original: anyone could replay a previously-fulfilled heartbeat
+  (`reqId == 0`) from public chain history while `maxAge == type(uint256).max`,
+  overwriting `latestRoundData` with a stale-but-legitimately-signed price.
+  Fix: monotonic-`startedAt` gate added to `fulfillPrice` (new
+  `StaleTimestamp(submittedAt, latestStartedAt)` error). Reads
+  `_rounds[latestRoundId].startedAt` directly — no new storage slot. The
+  fix fires regardless of `maxAge`, so the demo default is no longer a
+  silent attack surface.
+- **M-02 — `PriceLib.scaleTo` sign flip at `diff == 77`. Remediated.**
+  Original: a bare `int256(uint256(10**77))` cast reinterprets the high bit
+  and silently returns a negative factor. Fix: both casts now go through
+  `SafeCast.toInt256`, which reverts `SafeCastOverflowedUintToInt` on
+  out-of-range values.
 
-Both findings ship with PoC tests under `test/audit/`.
+The original PoC tests under `test/audit/` were rewritten in the same
+remediation pass to assert the fixes (they now demonstrate the *remediation*
+rather than the *bug*).
 
 ## Scope + methodology
 
@@ -75,8 +89,11 @@ The audit pass covered:
    consumer — out of scope for the 100% bar per the task brief).
 4. **PoC test authoring** for the two Medium findings under
    `test/audit/HeartbeatReplay.audit.test.ts` and
-   `test/audit/PriceLibScaleTo.audit.test.ts`. Both PoC suites pass against
-   the unmodified `src/`, demonstrating the bugs as they stand.
+   `test/audit/PriceLibScaleTo.audit.test.ts`. The PoCs originally
+   demonstrated the bugs against the unmodified `src/`; after remediation
+   they were rewritten to assert that the fixes hold (StaleTimestamp /
+   SafeCastOverflowedUintToInt are surfaced under the originally-exploitable
+   conditions).
 5. **Access-control matrix** construction with negative-test coverage
    cross-check (see `audit/reports/access-control-matrix.md`).
 6. **Storage-layout baseline** capture (see
@@ -119,8 +136,8 @@ work" below.
 
 | ID | Severity | Title | Status |
 |----|----------|-------|--------|
-| M-01 | Medium | Heartbeat (`reqId=0`) replay under demo-default `maxAge` | open |
-| M-02 | Medium | `PriceLib.scaleTo` sign-flip on `int256(10**77)` cast | open |
+| M-01 | Medium | Heartbeat (`reqId=0`) replay under demo-default `maxAge` | **remediated** |
+| M-02 | Medium | `PriceLib.scaleTo` sign-flip on `int256(10**77)` cast | **remediated** |
 | L-01 | Low | `setReporterSet` / `setMaxAge` accept footgun inputs | open |
 | L-02 | Low | `ReporterSet` empty-deploy leaves contract dormant until threshold set | open |
 | L-03 | Low | `PriceConsumer.requestPrice` not `nonReentrant` | open |
@@ -174,9 +191,10 @@ formal-verification re-runs (see "Deferred work").
   (Tested.)
 - **F-8:** On success, `_rounds[newRoundId]` stores
   `(answer=price, startedAt=timestamp, updatedAt=block.timestamp)`. (Tested.)
-- **F-9:** [**Open finding M-01**] *Should also hold:* a previously-recorded
-  `(reqId=0, timestamp=T)` submission cannot be re-recorded. Currently does
-  NOT hold under demo-default `maxAge`.
+- **F-9:** [**Originally M-01; remediated**] A new fulfillment must satisfy
+  `timestamp > _rounds[latestRoundId].startedAt`; reverts `StaleTimestamp`
+  otherwise. Closes the heartbeat-replay path under any `maxAge` setting.
+  (Regression-tested in `test/audit/HeartbeatReplay.audit.test.ts`.)
 
 ### `PriceLib.verifySignatures`
 
@@ -206,9 +224,10 @@ formal-verification re-runs (see "Deferred work").
 - **S-1:** `srcDecimals == dstDecimals` → identity. (Tested.)
 - **S-2:** Round-trips for `(srcDecimals, dstDecimals)` permutations where
   representable. (Tested in property suite for `0..30`-range decimals.)
-- **S-3:** [**Open finding M-02**] *Should hold:* the returned sign matches
-  `sign(src) * sign(factor)` where `factor = 10^(dst - src)` is
-  positive. Currently violated at `dst - src == 77`.
+- **S-3:** [**Originally M-02; remediated**] Magnitude casts go through
+  `SafeCast.toInt256`; `|dst - src| == 77` now reverts
+  `SafeCastOverflowedUintToInt` deterministically instead of sign-flipping.
+  (Regression-tested in `test/audit/PriceLibScaleTo.audit.test.ts`.)
 
 ### `ReporterSet`
 
@@ -278,14 +297,12 @@ correct on inspection; explicit coverage would harden the suite by ~5 tests.
 
 These are also **not** findings.
 
-- Spec §1 says "ages flow through to the dashboard but never gate." A
-  reader would benefit from an additional sentence noting "as a
-  consequence, heartbeat submissions are replayable by any caller under
-  the demo default — see M-01."
-- `PriceLib.scaleTo`'s NatSpec says "overflow reverts under Solidity 0.8"
-  but does not call out the sign-flip cast issue at `diff == 77`. A
-  one-line warning would prevent future re-use surprises even before the
-  bug is remediated.
+- Spec §1 says "ages flow through to the dashboard but never gate." Post
+  M-01 fix, the heartbeat-replay consequence no longer applies, but the
+  spec would still benefit from a note documenting the
+  monotonic-`startedAt` gate as an invariant of the on-chain feed.
+- `PriceLib.scaleTo`'s NatSpec was updated as part of the M-02 remediation
+  to reference the `SafeCast.toInt256` revert behaviour at `|diff| == 77`.
 
 ## Deferred work
 
@@ -302,8 +319,8 @@ Halmos symbolic-execution proofs:
   (D-2 over symbolic distinct inputs) are similarly amenable.
 - `scaleTo`'s S-3 invariant can be expressed as
   `forall src, srcDec, dstDec. scaleTo(src, srcDec, dstDec) > 0 IF src > 0
-  AND dstDec >= srcDec` — Halmos would directly counter-example the
-  `diff == 77` case.
+  AND dstDec >= srcDec`. Post-remediation, Halmos would confirm the
+  `|diff| == 77` boundary reverts deterministically via `SafeCast`.
 
 Recommend re-running this audit's deferred-work item once Halmos is
 available on the auditor host. Or land remediations for M-01 and M-02

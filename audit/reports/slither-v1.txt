@@ -1,0 +1,7 @@
+
+> evm-oracle-demo-contracts@0.1.0 slither
+> sh scripts/run-slither.sh
+
+'/Users/asolovov/.local/bin/solc --version' running
+'/Users/asolovov/.local/bin/solc @openzeppelin/=node_modules/@openzeppelin/ @chainlink/=node_modules/@chainlink/ slither-all.sol --combined-json abi,ast,bin,bin-runtime,srcmap,srcmap-runtime,userdoc,devdoc,hashes --evm-version cancun --allow-paths .,/Users/asolovov/projects/upwork/uw-oracle-contracts' running
+INFO:Slither:slither-all.sol analyzed (23 contracts with 94 detectors), 0 result(s) found

@@ -1,0 +1,80 @@
+    ✔ fulfillPrice: same non-zero reqId cannot be reused
+    ✔ fulfillPrice: reqId=0 (heartbeat) allows repeated submissions
+    ✔ fulfillPrice: rejects when fewer than threshold signatures provided
+    ✔ fulfillPrice: rejects sigs over a digest with the wrong assetId baked in
+    ✔ fulfillPrice: rejects sigs from non-reporters
+    ✔ fulfillPrice: strict maxAge rejects stale submissions
+    ✔ fulfillPrice: strict maxAge accepts submission whose timestamp is in the future (no skew check upward)
+    ✔ latestRoundData / getRoundData: revert before any fulfillment
+    ✔ getRoundData: returns historical round after fulfillment
+    ✔ setRequestFee: owner-only, emits RequestFeeChanged
+    ✔ setRequestFee: rejects non-owner
+    ✔ setMaxAge: owner-only, emits MaxAgeChanged
+    ✔ requestPrice: reverts RefundFailed when the caller cannot accept ETH
+    ✔ setReporterSet: owner-only, rejects zero, emits ReporterSetChanged on success
+
+  PriceLib (via PriceLibHarness)
+    buildDigest
+      ✔ matches viem's hashTypedData output for the same inputs
+      ✔ changes when any field changes (sanity)
+    scaleTo
+      ✔ returns input when srcDecimals == dstDecimals
+      ✔ scales up exactly
+      ✔ scales down with truncation toward zero
+      ✔ reverts on overflow when scaling up beyond int256 max
+    verifySignatures
+      ✔ returns true with exactly threshold valid signatures (2-of-3)
+      ✔ returns true with surplus signatures (3-of-3 when threshold is 2)
+      ✔ returns false when threshold is zero
+      ✔ returns false when signatures.length < threshold
+      ✔ ignores duplicate signatures from the same reporter (dedupe)
+      ✔ returns false when only unauthorized signers sign
+      ✔ skips malformed signatures without throwing
+
+  ReporterSet
+    ✔ constructor: bootstraps with reporters + threshold and emits ThresholdChanged
+    ✔ constructor: allows empty deploy with zero reporters + zero threshold
+    ✔ constructor: reverts on zero threshold with non-empty reporters
+    ✔ constructor: reverts when threshold exceeds reporter count
+    ✔ constructor: reverts when a zero-address reporter is supplied
+    ✔ constructor: reverts on duplicate reporter
+    ✔ addReporter: owner-only success path emits ReporterAdded
+    ✔ addReporter: rejects non-owner calls
+    ✔ addReporter: rejects zero-address
+    ✔ addReporter: rejects duplicate
+    ✔ removeReporter: swap-pop path (middle entry)
+    ✔ removeReporter: direct-pop path (last entry) + ReporterRemoved event
+    ✔ removeReporter: reverts when the address is not in the set
+    ✔ removeReporter: reverts when the removal would drop count below threshold
+    ✔ setThreshold: success path
+    ✔ setThreshold: zero revert
+    ✔ setThreshold: exceeds-count revert
+
+  Deployment smoke
+    ✔ deploys the full system and wires the registry
+
+
+  71 passing (6s)
+
+Saved html report to /Users/asolovov/projects/upwork/uw-oracle-contracts/coverage/html
+╔══════════════════════════════════════════════════════════════════════════╗
+║                             Coverage Report                              ║
+╚══════════════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════╗
+║ File Coverage                                                            ║
+╟─────────────────────────────────┬────────┬─────────────┬─────────────────╢
+║ File Path                       │ Line % │ Statement % │ Uncovered Lines ║
+╟─────────────────────────────────┼────────┼─────────────┼─────────────────╢
+║ src/consumers/PriceConsumer.sol │ 88.89  │ 90.91       │ 48              ║
+║ src/core/OracleRegistry.sol     │ 100.00 │ 100.00      │ -               ║
+║ src/core/ReporterSet.sol        │ 100.00 │ 100.00      │ -               ║
+║ src/libs/PriceLib.sol           │ 100.00 │ 100.00      │ -               ║
+║ src/core/PriceAggregator.sol    │ 100.00 │ 100.00      │ -               ║
+║ src/test/PriceLibHarness.sol    │ 100.00 │ 100.00      │ -               ║
+║ src/test/NonPayableCaller.sol   │ 100.00 │ 100.00      │ -               ║
+╟─────────────────────────────────┼────────┼─────────────┼─────────────────╢
+║ Total                           │ 99.40  │ 99.50       │                 ║
+╚═════════════════════════════════╧════════╧═════════════╧═════════════════╝
+
+
+WARNING: hre.network.connect() is deprecated and will be removed in a future version. Use hre.network.create() or hre.network.getOrCreate() instead.

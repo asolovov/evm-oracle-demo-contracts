@@ -473,7 +473,7 @@ new operational surfaces filed as R-01 + R-02 below).
 | Critical | 0 |
 | High     | 0 |
 | Medium   | 0 |
-| Low      | 2 (R-01, R-02) |
+| Low      | 2 (R-01, R-02 — **both accepted**) |
 | Informational | 2 (R-03, R-04) |
 
 ---
@@ -482,7 +482,7 @@ new operational surfaces filed as R-01 + R-02 below).
 
 - **Severity:** Low
 - **Site:** `src/core/PriceAggregator.sol:156-163` (the new gate)
-- **Status:** open (documented residual risk; same prerequisite as already-acknowledged reporter trust)
+- **Status:** **accepted** (2026-05-21, owner decision) — prerequisite is reporter-quorum compromise, already the highest trust assumption in the threat model. Demo posture treats redeploy via `OracleRegistry` re-point as acceptable recovery. Production deploys can add `timestamp <= block.timestamp + tolerance` if liveness budget tightens. Documented in `audit/THREAT_MODEL.md` "Residual risks".
 
 A colluding M-of-N reporter quorum can submit a heartbeat with `timestamp =
 type(uint256).max - 1`, then a second with `timestamp = type(uint256).max`.
@@ -514,7 +514,7 @@ Full write-up: `audit/reports/reaudit-v1.1.md#r-01`.
 
 - **Severity:** Low
 - **Site:** `src/core/PriceAggregator.sol:156-163` (gate applies to all submission paths)
-- **Status:** open (operational; off-chain-pipeline contract change)
+- **Status:** **accepted** (2026-05-21, owner decision) — off-chain pipeline already publishes a canonical single-timeline observation stream per spec §3.2, so the strict-monotonic-`timestamp` invariant is implicitly upheld. Treated as an on-chain-enforced version of the existing pipeline contract.
 
 The gate orders by reporter-attested `timestamp`, not by `reqId`. A
 consumer request `reqId = 42` aggregated at observation-time `T` can become

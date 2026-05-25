@@ -127,17 +127,29 @@ under `src/test/` are out of scope.
 - Threat: anyone replays an old `fulfillPrice` with `reqId = 0` from public history.
 - Mitigation: `maxAge` if set finite. Default is `type(uint256).max` (disabled). **Open finding.**
 
-### 3.7 `scaleTo` sign-flip (M-02)
+### 3.7 `scaleTo` sign-flip (M-02 — remediated)
 
 - Threat: a future caller passes `srcDecimals - dstDecimals = 77` (or vice versa) and silently receives the wrong sign.
-- Mitigation: not currently reachable from any on-chain entry point. **Open finding** for the library API.
+- Mitigation: **remediated** — `SafeCast.toInt256` reverts on out-of-range values; deterministic at the `10^77` boundary.
+
+### 3.8 Permanent-brick on colluding reporter quorum (R-01 — accepted)
+
+- Threat: a 2-of-N colluding reporter quorum signs a heartbeat with `timestamp = type(uint256).max`, locking `latestStartedAt` at its ceiling so no future submission can pass the strict-monotonic gate. Aggregator becomes permanently unable to record a new round.
+- Mitigation: **accepted residual risk for the demo.** Prerequisite is quorum compromise (already the highest acknowledged trust assumption). Recovery is cheap — redeploy aggregator and re-point via `OracleRegistry.registerAsset`. Production deploys with tighter liveness budgets should add a `timestamp <= block.timestamp + tolerance` cap.
+
+### 3.9 Consumer requests unfulfillable after fresher heartbeat (R-02 — accepted)
+
+- Threat: a consumer's `requestPrice` paid `requestFee` for `(reqId=R, observation-time=T)`. A heartbeat lands first with `timestamp = T+δ`, advancing `latestStartedAt` past `T`. The signatures over `(R, T)` can no longer satisfy the gate.
+- Mitigation: **accepted operational invariant.** Off-chain pipeline (per spec §3.2) already publishes a canonical single-timeline observation stream, so it re-aggregates and re-signs with a fresh timestamp per submission. The on-chain gate enforces what the pipeline already guarantees.
 
 ## 4. Residual risks (from spec §1 simplifications)
 
 | Risk | Spec ref | On-chain mitigation? |
 |------|----------|----------------------|
 | Reporter keys on disk on same VPS | §1 "Reporter keys on disk" | None (off-chain operational); on-chain rotation possible via owner |
-| Demo-permissive freshness (`maxAge` disabled by default) | §1 "Demo-permissive freshness" | None by default; owner-tunable. Enables M-01. |
+| Demo-permissive freshness (`maxAge` disabled by default) | §1 "Demo-permissive freshness" | M-01 closed by monotonic-`startedAt` gate; `maxAge` remains demo-permissive |
+| Permanent brick on quorum compromise (R-01) | accepted residual | Redeploy + `OracleRegistry` re-point |
+| Strict-monotonic-`timestamp` invariant across paths (R-02) | accepted operational | Off-chain pipeline contract |
 | Single VPS (no HA) | §1 "One VPS, one provider" | None — contract continues to serve last round if oracle goes dark |
 | No slashing / dispute period | §1 "Out of scope" | None |
 | Self-audit only | §1 | Mitigated by this audit + Slither baseline |

@@ -149,6 +149,10 @@ work" below.
 | L-01 | Low | `setReporterSet` / `setMaxAge` accept footgun inputs | open |
 | L-02 | Low | `ReporterSet` empty-deploy leaves contract dormant until threshold set | open |
 | L-03 | Low | `PriceConsumer.requestPrice` not `nonReentrant` | open |
+| R-01 | Low | Monotonic-`startedAt` gate enables permanent brick on quorum compromise | **accepted** |
+| R-02 | Low | Consumer requests unfulfillable after fresher heartbeat | **accepted** |
+| R-03 | Info | `StaleTimestamp` revert leaks no caller-authorization information | accepted |
+| R-04 | Info | Bootstrap branch (`latestRoundId == 0`) not directly exercised | accepted |
 | I-01 | Info | `PriceLib.buildDigest` recomputes domain separator each call | accepted |
 | I-02 | Info | `latestRoundId` `uint80` unchecked wrap | accepted |
 | I-03 | Info | `nextReqId` `uint256` unchecked wrap | accepted |

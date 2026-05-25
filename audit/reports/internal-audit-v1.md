@@ -50,6 +50,14 @@ No Critical or High findings. The Slither baseline reports zero issues
 (`audit/reports/slither-v1.txt`). All six historical Slither suppressions
 from task 03 were re-walked individually; rationales hold.
 
+**Re-audit (2026-05-21):** the remediation commit `359fbb8` was re-audited as
+a diff-scoped pass — full report at `audit/reports/reaudit-v1.1.md`. Verdicts:
+**M-01 closed-with-caveat** (heartbeat replay unreachable post-fix; two new
+operational surfaces filed as R-01 + R-02 Low for owner triage), **M-02
+closed** (`SafeCast.toInt256` reverts deterministically at the `10^77`
+boundary). Two additional informational items (R-03, R-04) filed as
+documentation-quality observations. No new Mediums.
+
 ### Headline findings (post-remediation)
 
 - **M-01 — Heartbeat replay under demo-default `maxAge`. Remediated.**

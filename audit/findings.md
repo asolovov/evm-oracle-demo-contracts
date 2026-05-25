@@ -454,3 +454,120 @@ task 03. Each was re-walked against the live source:
    **Agreed.** Forwarding ETH needs `call`; success flag is checked.
 
 All six rationales hold under independent review.
+
+---
+
+## Re-audit (2026-05-21) findings
+
+Re-audit scope: the remediation diff `6a4a8b8..359fbb8` only. Full re-audit
+report at `audit/reports/reaudit-v1.1.md`.
+
+**Verdict on M-01:** closed-with-caveat (heartbeat-replay path unreachable; two
+new operational surfaces filed as R-01 + R-02 below).
+**Verdict on M-02:** closed.
+
+### Re-audit tally
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High     | 0 |
+| Medium   | 0 |
+| Low      | 2 (R-01, R-02) |
+| Informational | 2 (R-03, R-04) |
+
+---
+
+### R-01 — Monotonic-`startedAt` gate makes a colluding reporter quorum able to permanently brick `fulfillPrice`
+
+- **Severity:** Low
+- **Site:** `src/core/PriceAggregator.sol:156-163` (the new gate)
+- **Status:** open (documented residual risk; same prerequisite as already-acknowledged reporter trust)
+
+A colluding M-of-N reporter quorum can submit a heartbeat with `timestamp =
+type(uint256).max - 1`, then a second with `timestamp = type(uint256).max`.
+After that, `latestStartedAt == type(uint256).max` and no future
+`timestamp` value can satisfy the strict-greater-than gate. The aggregator
+is permanently unable to record a new round. No on-chain recovery:
+`latestRoundId` and `_rounds[*].startedAt` have no owner-settable reset.
+Recovery requires aggregator redeploy (cheap because consumers route via
+`OracleRegistry`).
+
+**Severity rationale:** the prerequisite (compromised reporter quorum) is
+already the highest trust assumption in the threat model and already
+permits arbitrary garbage prices. The fix trades a vandalism surface
+(pre-fix) for a permanent-brick surface (post-fix). For a demo with
+`maxAge = type(uint256).max`, the trade is plausibly worse in liveness
+terms; for production with finite `maxAge`, equivalent.
+
+**Recommendation:** owner-discretion choice between (a) cap `timestamp` at
+`block.timestamp + tolerance` (symmetric to existing below-now `maxAge`
+policy), (b) add an owner-only `resetLatestRound(uint256 newStartedAt)`
+escape hatch, or (c) document in `audit/THREAT_MODEL.md` and leave as-is.
+Option (a) is most defensive.
+
+Full write-up: `audit/reports/reaudit-v1.1.md#r-01`.
+
+---
+
+### R-02 — Consumer-driven fulfillments with older reporter-attested timestamps become permanently unfulfillable
+
+- **Severity:** Low
+- **Site:** `src/core/PriceAggregator.sol:156-163` (gate applies to all submission paths)
+- **Status:** open (operational; off-chain-pipeline contract change)
+
+The gate orders by reporter-attested `timestamp`, not by `reqId`. A
+consumer request `reqId = 42` aggregated at observation-time `T` can become
+unfulfillable if a concurrent heartbeat lands first with `timestamp =
+T + δ`, advancing `latestStartedAt` past `T`. The original signatures over
+`(reqId=42, timestamp=T)` cannot be re-used; the off-chain pipeline must
+re-aggregate and re-sign with a fresh timestamp. The `requestFee` paid for
+`reqId = 42` is consumed (no on-chain refund path), so this surfaces at
+the application layer.
+
+Pre-fix, this could not happen — any submission with valid signatures landed
+regardless of timestamp ordering. The fix introduces a total-ordering
+invariant the off-chain pipeline must respect. The pipeline (per spec
+§3.2) already publishes a canonical single-timeline observation stream, so
+the invariant is implicitly held in the current design — but it is now an
+on-chain-enforced contract, not just an off-chain convention.
+
+**Recommendation:** add a `@dev` line to the `fulfillPrice` / contract-level
+NatSpec documenting the strict-monotonic-`timestamp` requirement across
+heartbeat and consumer-driven paths. Suggest also updating spec §1 /
+§3.2.
+
+Full write-up: `audit/reports/reaudit-v1.1.md#r-02`.
+
+---
+
+### R-03 — `StaleTimestamp` revert leaks no caller-authorization information
+
+- **Severity:** Informational
+- **Status:** accepted
+
+The new gate fires *before* signature verification — a stale timestamp from
+an unauthorized caller reverts the same way as one from a legitimate stale
+source. This is the **correct** ordering: cheap-checks-first, and the
+revert reason correctly identifies the submission's `timestamp` property
+rather than the submitter's identity. No fix needed; logged only to note
+that a reader of the M-01 PoC might assume the gate enforces authorization.
+It does not — the gate is a property of the submission, not the submitter.
+
+Full write-up: `audit/reports/reaudit-v1.1.md#r-03`.
+
+---
+
+### R-04 — Bootstrap branch (`latestRoundId == 0`) not directly exercised by a dedicated test
+
+- **Severity:** Informational
+- **Status:** accepted (covered transitively; explicit test would harden)
+
+Every existing `fulfillPrice` test starts from `latestRoundId == 0` and so
+exercises the bootstrap branch (`latestStartedAt == 0`) transitively, but
+no test directly asserts the boundary behaviour (e.g. `fulfillPrice` with
+`timestamp = 0` on a fresh aggregator reverts `StaleTimestamp(0, 0)`). A
+one-line test would convert documentation-via-NatSpec into
+documentation-via-assertion.
+
+Full write-up: `audit/reports/reaudit-v1.1.md#r-04`.

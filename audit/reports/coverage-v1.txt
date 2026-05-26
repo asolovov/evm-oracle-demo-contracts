@@ -1,0 +1,132 @@
+No contracts to compile
+
+Running Mocha tests
+
+
+  AUDIT M-01: heartbeat-replay regression
+    ✔ stale-timestamp gate blocks a heartbeat replay (was: silent overwrite of latest round) (520ms)
+    ✔ stale-timestamp gate generalises beyond heartbeats: a consumer-driven replay with the same timestamp also reverts
+
+  AUDIT M-02: PriceLib.scaleTo cast regression
+    ✔ diff = 76 still returns the correct positive factor (boundary, unchanged)
+    ✔ diff = 77 now reverts via SafeCast (was: silent negative result)
+    ✔ diffDown = 77 now reverts via SafeCast (was: silent sign-flipped divisor)
+    ✔ scale-up still reverts when the product itself would overflow int256 (default 0.8 checked arithmetic)
+
+  End-to-end flow
+    ✔ PriceConsumer → PriceAggregator → fulfillPrice → consumer reads latestAnswer
+    ✔ survives reporter set rotation mid-stream (old set deauthorized, new set works)
+    ✔ registry: every registered asset resolves to a deployed aggregator
+
+  PriceAggregator (property-based)
+    ✔ requestPrice refunds exactly msg.value - requestFee (166ms)
+
+  PriceLib (property-based)
+    buildDigest
+      ✔ matches off-chain hashTypedData over random inputs (257ms)
+      ✔ distinct inputs produce distinct digests (collision resistance within sampled space) (289ms)
+    scaleTo
+      ✔ round-trips for non-shrinking pairs (dstDecimals >= srcDecimals) (144ms)
+      ✔ scaling down is the inverse of scaling up when no truncation occurs (288ms)
+    verifySignatures
+      ✔ never passes with sigs only from unauthorized signers (2122ms)
+      ✔ authorized M-of-N sigs over the canonical digest always pass (711ms)
+
+  OracleRegistry
+    ✔ constructor: sets owner
+    ✔ registerAsset: registers new asset and emits AssetRegistered
+    ✔ registerAsset: updates existing asset and emits AssetUpdated (not AssetRegistered)
+    ✔ registerAsset: tracks insertion order across multiple assets
+    ✔ registerAsset: reverts on zero asset id
+    ✔ registerAsset: reverts on zero aggregator
+    ✔ registerAsset: rejects non-owner caller
+    ✔ getAggregator: returns zero address for unknown asset
+    ✔ listAssets: empty initially
+
+  PriceAggregator
+    ✔ constructor: stores immutable state and defaults maxAge to uint256.max
+    ✔ constructor: reverts when reporter set is the zero address
+    ✔ requestPrice: emits PriceRequested with monotonic reqId, refunds excess
+    ✔ requestPrice: works at exact fee (no refund)
+    ✔ requestPrice: increments nextReqId across multiple calls
+    ✔ requestPrice: reverts on insufficient fee
+    ✔ fulfillPrice: 2-of-3 sigs succeed; round state + event recorded
+    ✔ fulfillPrice: same non-zero reqId cannot be reused
+    ✔ fulfillPrice: reqId=0 (heartbeat) allows repeated submissions
+    ✔ fulfillPrice: rejects when fewer than threshold signatures provided
+    ✔ fulfillPrice: rejects sigs over a digest with the wrong assetId baked in
+    ✔ fulfillPrice: rejects sigs from non-reporters
+    ✔ fulfillPrice: strict maxAge rejects stale submissions
+    ✔ fulfillPrice: strict maxAge accepts submission whose timestamp is in the future (no skew check upward)
+    ✔ latestRoundData / getRoundData: revert before any fulfillment
+    ✔ getRoundData: returns historical round after fulfillment
+    ✔ setRequestFee: owner-only, emits RequestFeeChanged
+    ✔ setRequestFee: rejects non-owner
+    ✔ setMaxAge: owner-only, emits MaxAgeChanged
+    ✔ requestPrice: reverts RefundFailed when the caller cannot accept ETH
+    ✔ setReporterSet: owner-only, rejects zero, emits ReporterSetChanged on success
+
+  PriceLib (via PriceLibHarness)
+    buildDigest
+      ✔ matches viem's hashTypedData output for the same inputs
+      ✔ changes when any field changes (sanity)
+    scaleTo
+      ✔ returns input when srcDecimals == dstDecimals
+      ✔ scales up exactly
+      ✔ scales down with truncation toward zero
+      ✔ reverts on overflow when scaling up beyond int256 max
+    verifySignatures
+      ✔ returns true with exactly threshold valid signatures (2-of-3)
+      ✔ returns true with surplus signatures (3-of-3 when threshold is 2)
+      ✔ returns false when threshold is zero
+      ✔ returns false when signatures.length < threshold
+      ✔ ignores duplicate signatures from the same reporter (dedupe)
+      ✔ returns false when only unauthorized signers sign
+      ✔ skips malformed signatures without throwing
+
+  ReporterSet
+    ✔ constructor: bootstraps with reporters + threshold and emits ThresholdChanged
+    ✔ constructor: allows empty deploy with zero reporters + zero threshold
+    ✔ constructor: reverts on zero threshold with non-empty reporters
+    ✔ constructor: reverts when threshold exceeds reporter count
+    ✔ constructor: reverts when a zero-address reporter is supplied
+    ✔ constructor: reverts on duplicate reporter
+    ✔ addReporter: owner-only success path emits ReporterAdded
+    ✔ addReporter: rejects non-owner calls
+    ✔ addReporter: rejects zero-address
+    ✔ addReporter: rejects duplicate
+    ✔ removeReporter: swap-pop path (middle entry)
+    ✔ removeReporter: direct-pop path (last entry) + ReporterRemoved event
+    ✔ removeReporter: reverts when the address is not in the set
+    ✔ removeReporter: reverts when the removal would drop count below threshold
+    ✔ setThreshold: success path
+    ✔ setThreshold: zero revert
+    ✔ setThreshold: exceeds-count revert
+
+  Deployment smoke
+    ✔ deploys the full system and wires the registry
+
+
+  77 passing (5s)
+
+Saved html report to /Users/asolovov/projects/upwork/uw-oracle-contracts/coverage/html
+╔══════════════════════════════════════════════════════════════════════════╗
+║                             Coverage Report                              ║
+╚══════════════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════╗
+║ File Coverage                                                            ║
+╟─────────────────────────────────┬────────┬─────────────┬─────────────────╢
+║ File Path                       │ Line % │ Statement % │ Uncovered Lines ║
+╟─────────────────────────────────┼────────┼─────────────┼─────────────────╢
+║ src/consumers/PriceConsumer.sol │ 88.89  │ 90.91       │ 48              ║
+║ src/core/OracleRegistry.sol     │ 100.00 │ 100.00      │ -               ║
+║ src/core/ReporterSet.sol        │ 100.00 │ 100.00      │ -               ║
+║ src/libs/PriceLib.sol           │ 100.00 │ 100.00      │ -               ║
+║ src/core/PriceAggregator.sol    │ 100.00 │ 100.00      │ -               ║
+║ src/test/PriceLibHarness.sol    │ 100.00 │ 100.00      │ -               ║
+║ src/test/NonPayableCaller.sol   │ 100.00 │ 100.00      │ -               ║
+╟─────────────────────────────────┼────────┼─────────────┼─────────────────╢
+║ Total                           │ 99.42  │ 99.51       │                 ║
+╚═════════════════════════════════╧════════╧═════════════╧═════════════════╝
+
+

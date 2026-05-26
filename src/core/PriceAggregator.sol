@@ -37,6 +37,12 @@ contract PriceAggregator is ILighthouseAggregator, Ownable2Step, ReentrancyGuard
     ///         than `maxAge`.
     error SubmissionTooOld(uint256 submittedAt, uint256 currentMaxAge);
 
+    /// @notice Reverts when the submitted `timestamp` does not strictly exceed the latest
+    ///         stored round's `startedAt`. Prevents replay of previously-signed payloads —
+    ///         including heartbeat (`reqId == 0`) submissions — regardless of the `maxAge`
+    ///         policy. See audit/findings.md#M-01.
+    error StaleTimestamp(uint256 submittedAt, uint256 latestStartedAt);
+
     /// @notice Reverts on attempts to install the zero reporter set.
     error ZeroReporterSet();
 
@@ -146,6 +152,15 @@ contract PriceAggregator is ILighthouseAggregator, Ownable2Step, ReentrancyGuard
         bytes[] calldata signatures
     ) external override {
         if (reqId != 0 && fulfilled[reqId]) revert ReqIdAlreadyFulfilled(reqId);
+
+        // Monotonic-timestamp gate: a new round must carry a strictly newer reporter-attested
+        // observation time than the latest stored round. Closes the heartbeat-replay path
+        // (audit/findings.md#M-01) independently of `maxAge`. On first fulfillment
+        // `_rounds[0].startedAt == 0`, so the gate degenerates to `timestamp > 0` — sane.
+        uint256 latestStartedAt = _rounds[latestRoundId].startedAt;
+        if (timestamp <= latestStartedAt) {
+            revert StaleTimestamp(timestamp, latestStartedAt);
+        }
 
         uint256 currentMaxAge = maxAge;
         if (currentMaxAge != type(uint256).max) {

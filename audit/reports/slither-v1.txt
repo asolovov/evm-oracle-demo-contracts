@@ -1,0 +1,4 @@
+
+> evm-oracle-demo-contracts@0.1.0 slither
+> sh scripts/run-slither.sh
+

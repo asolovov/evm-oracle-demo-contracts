@@ -7,6 +7,39 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Deployed
+
+- **Ethereum Sepolia** (chain id 11155111, deployer
+  `0xCEf4FE1CA9071f4ed4baD6c1087CEb08838A983E`, 2026-05-26): 12 contracts —
+  `ReporterSet` (2-of-3, three freshly-generated reporter EOAs),
+  `OracleRegistry`, and 10 `PriceAggregator` instances (WETH, WBTC, LINK,
+  UNI, AAVE, XAU, XAG, SPX, WTI, HG), each with `decimals = 8`, `version = 1`,
+  `requestFee = 0`, and `maxAge = type(uint256).max` (demo default). All 12
+  contracts verified on Etherscan; smoke test passed (10 assets resolved
+  through the registry; `requestPrice` on WETH emitted
+  `PriceRequested(reqId=1, requester=deployer)`). Addresses + ABIs committed
+  to `deployments/ethereum-sepolia/`.
+
+### Added
+
+- `script/deploy/{generateReporters.ts, deployAll.ts, smokeTest.ts,
+  verifyAll.sh}` — reproducible deployment + verification + smoke-test
+  pipeline.
+- `config/assets.ts` — canonical 10-asset metadata table consumed by the
+  deploy script and downstream services.
+- `deployments/README.md` — entry point for the deployments tree;
+  documents the bump procedure.
+
+### Changed
+
+- `hardhat.config.ts` adds an Ethereum Sepolia network entry (`type: "http"`,
+  `chainType: "l1"`, `chainId: 11155111`) gated on `SEPOLIA_RPC_URL` +
+  `DEPLOYER_PRIVATE_KEY` env vars, and an Etherscan verify config gated on
+  `SEPOLIA_ETHERSCAN_API_KEY`.
+- `.gitignore` excludes `.reporters/` (per-deployment reporter private keys)
+  and `deployments/*/.verify-args/` (transient `--constructor-args-path`
+  modules).
+
 ### Security
 
 - **M-01 (Medium) fix** — Heartbeat replay closed in `PriceAggregator.fulfillPrice`.

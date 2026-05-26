@@ -1,0 +1,86 @@
+{
+  "network": "ethereum-sepolia",
+  "chainId": 11155111,
+  "deployedAt": "2026-05-26T19:53:52.277Z",
+  "deployer": "0xcef4fe1ca9071f4ed4bad6c1087ceb08838a983e",
+  "reporterSet": "0x683e888295515fdc27afe7dafd101f8789afe698",
+  "reporterAddresses": [
+    "0x7ab705fAa77CC9c6469916b9138Cc22B7d816F0d",
+    "0xB0fEEcE62f7eAfA38C59656E1047362a83F22e61",
+    "0x4BC95552D81996034A5723035112b4Ea78FE1989"
+  ],
+  "threshold": "2",
+  "oracleRegistry": "0x89a6c12a403733c6a817472cec46a530581cb7ef",
+  "aggregators": [
+    {
+      "symbol": "WETH",
+      "description": "Wrapped Ether",
+      "decimals": 8,
+      "assetId": "0x0f8a193ff464434486c0daf7db2a895884365d2bc84ba47a68fcf89c1b14b5b8",
+      "address": "0x075be31662c2548c4e940d7e769c328a34dcb281"
+    },
+    {
+      "symbol": "WBTC",
+      "description": "Wrapped Bitcoin",
+      "decimals": 8,
+      "assetId": "0x98da2c5e4c6b1db946694570273b859a6e4083ccc8faa155edfc4c54eb3cfd73",
+      "address": "0xf8ad3a2505eece7ad276db038c7c56930bd436e4"
+    },
+    {
+      "symbol": "LINK",
+      "description": "Chainlink",
+      "decimals": 8,
+      "assetId": "0x921a3539bcb764c889432630877414523e7fbca00c211bc787aeae69e2e3a779",
+      "address": "0xecc43e6ec38ce135b81ae8042df96eef55915d14"
+    },
+    {
+      "symbol": "UNI",
+      "description": "Uniswap",
+      "decimals": 8,
+      "assetId": "0xfba01d52a7cd84480d0573725899486a0b5e55c20ff45d6628874349375d1650",
+      "address": "0x69d16087172f404925ffc61c0ac25c608ff215b4"
+    },
+    {
+      "symbol": "AAVE",
+      "description": "Aave",
+      "decimals": 8,
+      "assetId": "0xde46fbfa339d54cd65b79d8320a7a53c78177565c2aaf4c8b13eed7865e7cfc8",
+      "address": "0xa011fa0757b5d2a9a4c73cfb4647c29d96da7a2f"
+    },
+    {
+      "symbol": "XAU",
+      "description": "Gold (USD/oz)",
+      "decimals": 8,
+      "assetId": "0x7c687a3207cd9c05b4b11d8dd7ac337919c2200102d72989a597ebc5afcf180b",
+      "address": "0x61125ef037305e4b81c5e5a864225860f455d318"
+    },
+    {
+      "symbol": "XAG",
+      "description": "Silver (USD/oz)",
+      "decimals": 8,
+      "assetId": "0x5ccc5c04130d272bf07d6e066f4cae40cfc0313643d815db3e17af00e6ebf601",
+      "address": "0x4e05cc443cbcd5425b5b7c7df124101ad70b8b02"
+    },
+    {
+      "symbol": "SPX",
+      "description": "S&P 500 Index",
+      "decimals": 8,
+      "assetId": "0x1308465f1da3a6702b88abc29db16011bdb6f6a7cb404fee1daa81f8da9d9972",
+      "address": "0x3fa9e3fd3e5e70f26ccf4b67825489276f9cbb27"
+    },
+    {
+      "symbol": "WTI",
+      "description": "WTI Crude Oil (USD/bbl)",
+      "decimals": 8,
+      "assetId": "0x1f29567db4e0c1628fa0f8675c031b615246dd0dd3de399fdf8b5aec1829181d",
+      "address": "0x70131a2612682f7d56a2a30010075e8f0e9d8eca"
+    },
+    {
+      "symbol": "HG",
+      "description": "Copper (USD/lb)",
+      "decimals": 8,
+      "assetId": "0x7f1edccb34ff65dc749f950e76926ca09253b4f2e87cc2a946d4ecaa2716decf",
+      "address": "0x87249f3aeb58c46be3f5edd1d5071ee76d816900"
+    }
+  ]
+}
